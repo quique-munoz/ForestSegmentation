@@ -9,8 +9,8 @@ Este proyecto permite **capturar sincronizadamente imágenes RGB y nubes de punt
 ## 📦 Estructura general del proyecto
 
 ```
-lidar_camera_fusion/
-├── lidar_camera_fusion/         # Contiene los scripts
+forest_segmentation/
+├── forest_segmentation/         # Contiene los scripts
 │   ├── process_info.py          # Segmenta y calcula alturas de vegetación por tramos
 │   ├── map_interactive.py       # Genera mapa interactivo Folium filtrando los resultados
 │   └── snapshot_saver/          # Nodo ROS2: captura sincronizada LiDAR + cámara + GPS
@@ -38,7 +38,7 @@ lidar_camera_fusion/
 Para capturar un **snapshot sincronizado** con imagen RGB, nube de puntos del LiDAR, coordenadas GPS y transformaciones entre cámara y LiDAR:
 
 ```bash
-ros2 run lidar_camera_fusion snapshot_saver
+ros2 run forest_segmentation snapshot_saver
 ```
 
 👉 Esto genera una nueva carpeta en `snapshots/` con el formato `YYYY-MM-DD_HH-MM-SS/`, que contiene todos los datos necesarios para el procesamiento posterior.
@@ -199,7 +199,7 @@ pip install torch torchvision open3d folium supervision pandas pillow scipy
 
 | Etapa                      | Comando                                       | Resultado                                  |
 | :------------------------- | :-------------------------------------------- | :----------------------------------------- |
-| 📷 Captura de snapshot     | `ros2 run lidar_camera_fusion snapshot_saver` | Carpeta con imagen, LiDAR y GPS            |
+| 📷 Captura de snapshot     | `ros2 run forest_segmentation snapshot_saver` | Carpeta con imagen, LiDAR y GPS            |
 | 🌿 Segmentación y análisis | `python3 process_info.py`                     | Segmentación + métricas + mapa actualizado |
 | 🗺️ Ver mapa               | `snapshots/maps/veg_map.html`                 | Mapa Folium interactivo                    |
 
@@ -222,5 +222,5 @@ pip install torch torchvision open3d folium supervision pandas pillow scipy
 ---
 
 ✍️ **Autor:** Quique Muñoz
-📍 **Repositorio:** `lidar_camera_fusion`
+📍 **Repositorio:** `forest_segmentation`
 🗓️ **Última actualización:** Noviembre 2025

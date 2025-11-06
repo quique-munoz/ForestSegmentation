@@ -1,7 +1,7 @@
 from setuptools import find_packages, setup
 import os
 from glob import glob
-package_name = 'lidar_camera_fusion'
+package_name = 'forest_segmentation'
 
 setup(
     name=package_name,
@@ -22,9 +22,9 @@ setup(
     license='TODO: License declaration',
     entry_points={
         'console_scripts': [
-            'lidar_camera_fusion_node = lidar_camera_fusion.lidar_camera_fusion_node:main',
-            'snapshot_saver = lidar_camera_fusion.snapshot_saver:main',
-            'snapshot_saver_sin_tf = lidar_camera_fusion.snapshot_saver_sin_tf:main',
+            'lidar_camera_fusion_node = forest_segmentation.lidar_camera_fusion_node:main',
+            'snapshot_saver = forest_segmentation.snapshot_saver:main',
+            'snapshot_saver_sin_tf = forest_segmentation.snapshot_saver_sin_tf:main',
         ],
     },
 )
