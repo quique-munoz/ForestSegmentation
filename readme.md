@@ -38,10 +38,88 @@ forest_segmentation/
 Para capturar un **snapshot sincronizado** con imagen RGB, nube de puntos del LiDAR, coordenadas GPS y transformaciones entre cámara y LiDAR:
 
 ```bash
-ros2 run forest_segmentation snapshot_saver
+ros2 run forest_segmentation snapshot_saver_old
 ```
 
-👉 Esto genera una nueva carpeta en `snapshots/` con el formato `YYYY-MM-DD_HH-MM-SS/`, que contiene todos los datos necesarios para el procesamiento posterior.
+👉 Esto genera una nueva carpeta en `snapshots/` con el formato `YYYY-MM-DD_HH-MM-SS/`, que contiene todos los datos necesarios para el procesamiento posterior. Captura una única vez.
+
+Para poder ejecutar las capturas en múltiples ocasiones se ha desarrollado un **nodo servidor de acciones** que sincroniza **Imagen + LiDAR + GPS** y guarda un *snapshot* completo a disco, más un ejemplo de un nodo **cliente** que dispara capturas periódicas.
+
+### Nodos
+
+* **`snapshot_saver_action`** (servidor)
+  Publica la acción **`/take_snapshot`** del paquete `forest_segmentation_interfaces`. Sincroniza:
+
+  * `sensor_msgs/Image` en `/gmsl_camera/port_0/cam_0/image_raw`
+  * `sensor_msgs/PointCloud2` en `/LiDAR_1/points_raw`
+  * `sensor_msgs/NavSatFix` en `/piksi/navsatfix_best_fix`
+    y escucha `sensor_msgs/CameraInfo` en `/gmsl_camera/port_0/cam_0/camera_info` (se guarda bajo demanda).  
+
+* **`snapshot_client`** (cliente)
+  Envía goals periódicos a `/take_snapshot` con *slop* y la opción de exigir `CameraInfo` **solo en el primer goal**. Evita solapar goals si uno sigue en curso. 
+
+### Interfaz de la acción `TakeSnapshot`
+
+* **Goal**
+
+  * `float32 sync_slop_sec` — tolerancia de sincronización.
+  * `bool require_caminfo` — si `true`, intenta guardar `camera_info.json` en ese snapshot.
+* **Feedback**
+
+  * `string state` — estados como `"syncing"`, `"saving"`. 
+* **Result**
+
+  * `bool success`, `string error`
+  * `string output_dir`, `string basename`
+  * `string image_path`, `points_path`, `gps_path`, `tf_path` 
+
+### Parámetros
+
+* **Cliente**
+
+  * `period_sec` (float, default 15.0): periodo entre capturas. 
+  * `sync_slop_sec` (float, default 0.1): *slop* por defecto para la sincronización. 
+
+### Ejecución
+
+1. **Servidor**
+
+```bash
+ros2 run forest_segmentation snapshot_saver_action
+```
+
+2. **Cliente** (capturas periódicas)
+
+```bash
+ros2 run forest_segmentation snapshot_client \
+  --ros-args -p period_sec:=10.0 -p sync_slop_sec:=0.08
+```
+
+3. **Goal manual con CLI**
+
+```bash
+ros2 action send_goal /take_snapshot \
+  forest_segmentation_interfaces/action/TakeSnapshot \
+  "{sync_slop_sec: 0.05, require_caminfo: true}"
+```
+
+### Estructura de salida
+
+Los snapshots se guardan en `forest_segmentation/snapshots/AAAA-MM-DD_HH-MM-SS/` con prefijo de *timestamp* de la imagen:
+
+```
+<fecha>_<hora>_<usec>_image.png
+<fecha>_<hora>_<usec>_points.npy
+<fecha>_<hora>_<usec>_gps.json
+<fecha>_<hora>_<usec>_tf.json
+camera_info.json        # si lo solicitaste en el goal
+```
+
+### Troubleshooting
+
+* **“Goal en curso”**: el cliente no envía un nuevo goal hasta que termine el anterior. Baja `period_sec` o evita tiempos muertos largos. 
+* **Timeout esperando datos sincronizados**: revisa *topics* y sube `sync_slop_sec` si las fuentes no están bien alineadas. 
+* **TF no encontrada** (`camera_left←lidar`) : ajusta frames o publica la TF estática correspondiente. 
 
 ---
 
