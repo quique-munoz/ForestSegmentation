@@ -278,7 +278,7 @@ if len(veh) > 1:
 
 
 # ================== Capa de calor basada en los puntos de vegetación ==================
-MAX_HEIGHT = 3.0
+MAX_HEIGHT = 2.0
 
 heat_data = []
 for p in points_data["combined"]:
@@ -318,4 +318,4 @@ plugins.GroupedLayerControl(
 # Guardar y abrir
 m.save(MAP_PATH)
 print(f"💾 Mapa actualizado en: {MAP_PATH}")
-webbrowser.open(f"file://{MAP_PATH.resolve()}")
+# webbrowser.open(f"file://{MAP_PATH.resolve()}")
