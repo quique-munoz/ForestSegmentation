@@ -26,7 +26,8 @@ setup(
             'snapshot_saver_old = forest_segmentation.snapshot_saver_old:main',
             'snapshot_saver_sin_tf = forest_segmentation.snapshot_saver_sin_tf:main',
             'snapshot_client = forest_segmentation.snapshot_client:main',
-            'snapshot_saver_action = forest_segmentation.snapshot_saver_action:main',
+            'snapshot_saver_action = forest_segmentation.snapshot_saver_action:main',                        
+            'snapshot_saver_action_param = forest_segmentation.snapshot_saver_action_param:main',
         ],
     },
 )
