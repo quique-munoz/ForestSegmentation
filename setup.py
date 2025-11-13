@@ -28,6 +28,7 @@ setup(
             'snapshot_client = forest_segmentation.snapshot_client:main',
             'snapshot_saver_action = forest_segmentation.snapshot_saver_action:main',                        
             'snapshot_saver_action_param = forest_segmentation.snapshot_saver_action_param:main',
+            'net_monitor_node = forest_segmentation.net_monitor_node:main',
         ],
     },
 )
