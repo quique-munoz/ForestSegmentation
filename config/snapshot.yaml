@@ -1,0 +1,11 @@
+snapshot_saver_action:
+  ros__parameters:
+    image_topic:   "/gmsl_camera/port_0/cam_0/image_raw"
+    caminfo_topic: "/gmsl_camera/port_0/cam_0/camera_info"
+    lidar_topic:   "/LiDAR_1/points_raw"
+    gps_topic:     "/piksi/navsatfix_best_fix"
+    camera_frame:  "camera_left"
+    lidar_frame:   "lidar"
+    base_snap_dir: ""
+    sync_slop_sec_default: 0.08
+    queue_size: 10

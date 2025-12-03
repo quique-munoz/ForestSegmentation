@@ -10,11 +10,22 @@ Este proyecto permite **capturar sincronizadamente imágenes RGB y nubes de punt
 
 ```
 forest_segmentation/
-├── forest_segmentation/         # Contiene los scripts
-│   ├── process_info.py          # Segmenta y calcula alturas de vegetación por tramos
+├── config/                      
+│   └── snapshot.yaml            # Archivo de configuración de los parámetros para la captura de datos
+│
+├── forest_segmentation/
 │   ├── map_interactive.py       # Genera mapa interactivo Folium filtrando los resultados
-│   └── snapshot_saver/          # Nodo ROS2: captura sincronizada LiDAR + cámara + GPS
+│   ├── net_monitor_node.py      # Monitorización de la cobertura de internet
+│   ├── process_individual.py    # Segmenta y calcula alturas de vegetación por tramos, para la última captura
+│   ├── process.py               # Segmenta y calcula alturas de vegetación por tramos, para todas las capturas
+│   ├── snapshot_client.py       # Cliente ROS2 para la captura de datos
+│   └── snapshot_action.py       # Acción ROS2 para la captura de datos
+│
+├── launch/
+│   └── snapshot.launch.py       # Launcher para la captura de datos (action-client)
+│ 
 ├── runs/checkpoint_best_ema.pth # Modelo RF-DETRSegPreview entrenado
+│ 
 └── snapshots/                   # Contiene los datos capturados y procesados
     ├── 2025-10-23_10-29-12/     # Formato de las carpetas de captura: AAAA-MM-DD_HH-MM-SS/
     │   ├── *_image.png          # Imagen capturada por la cámara
@@ -38,7 +49,7 @@ forest_segmentation/
 Para capturar un **snapshot sincronizado** con imagen RGB, nube de puntos del LiDAR, coordenadas GPS y transformaciones entre cámara y LiDAR:
 
 ```bash
-ros2 run forest_segmentation snapshot_saver_old
+ros2 launch forest_segmentation snapshot.launch.py
 ```
 
 👉 Esto genera una nueva carpeta en `snapshots/` con el formato `YYYY-MM-DD_HH-MM-SS/`, que contiene todos los datos necesarios para el procesamiento posterior. Captura una única vez.
@@ -47,13 +58,12 @@ Para poder ejecutar las capturas en múltiples ocasiones se ha desarrollado un *
 
 ### Nodos
 
-* **`snapshot_saver_action`** (servidor)
+* **`snapshot_action`** (servidor)
   Publica la acción **`/take_snapshot`** del paquete `forest_segmentation_interfaces`. Sincroniza:
-
-  * `sensor_msgs/Image` en `/gmsl_camera/port_0/cam_0/image_raw`
-  * `sensor_msgs/PointCloud2` en `/LiDAR_1/points_raw`
-  * `sensor_msgs/NavSatFix` en `/piksi/navsatfix_best_fix`
-    y escucha `sensor_msgs/CameraInfo` en `/gmsl_camera/port_0/cam_0/camera_info` (se guarda bajo demanda).  
+  * `sensor_msgs/Image` en `image_topic`
+  * `sensor_msgs/PointCloud2` en `lidar_topic`
+  * `sensor_msgs/NavSatFix` en `gps_topic`
+    y escucha `sensor_msgs/CameraInfo` en `caminfo_topic` (se guarda bajo demanda).  
 
 * **`snapshot_client`** (cliente)
   Envía goals periódicos a `/take_snapshot` con *slop* y la opción de exigir `CameraInfo` **solo en el primer goal**. Evita solapar goals si uno sigue en curso. 
@@ -80,12 +90,12 @@ Para poder ejecutar las capturas en múltiples ocasiones se ha desarrollado un *
   * `period_sec` (float, default 15.0): periodo entre capturas. 
   * `sync_slop_sec` (float, default 0.1): *slop* por defecto para la sincronización. 
 
-### Ejecución
+### Ejecución Manual (sin launcher)
 
 1. **Servidor**
 
 ```bash
-ros2 run forest_segmentation snapshot_saver_action
+ros2 run forest_segmentation snapshot_action --ros-args --params-file snapshot.yaml
 ```
 
 2. **Cliente** (capturas periódicas)
@@ -128,12 +138,12 @@ camera_info.json        # si lo solicitaste en el goal
 Una vez capturados los datos, ejecuta:
 
 ```bash
-python3 process_info.py
+python3 process.py
 ```
 
-### 🔍 ¿Qué hace este script (`process_info.py`)?
+### 🔍 ¿Qué hace este script (`process.py`)?
 
-1. **Localiza automáticamente** el último snapshot en `snapshots/` según el nombre de la carpeta.
+1. **Localiza automáticamente** todos los snapshots en `snapshots/` según el nombre de la carpeta.
 2. **Carga los datos**:
 
    * Imagen RGB (`*_image.png`)
@@ -243,7 +253,7 @@ flowchart LR
 
 ## 📊 Resultados
 
-Cada nueva ejecución de `process_info.py`:
+Cada nueva ejecución de `process.py`:
 
 * 📁 Crea la carpeta `processed/` dentro del snapshot.
 * 📊 Genera `veg_heights.xlsx` con las métricas por lado o globales.
@@ -275,11 +285,11 @@ pip install torch torchvision open3d folium supervision pandas pillow scipy
 
 ## 🧾 Resumen rápido
 
-| Etapa                      | Comando                                       | Resultado                                  |
-| :------------------------- | :-------------------------------------------- | :----------------------------------------- |
-| 📷 Captura de snapshot     | `ros2 run forest_segmentation snapshot_saver` | Carpeta con imagen, LiDAR y GPS            |
-| 🌿 Segmentación y análisis | `python3 process_info.py`                     | Segmentación + métricas + mapa actualizado |
-| 🗺️ Ver mapa               | `snapshots/maps/veg_map.html`                 | Mapa Folium interactivo                    |
+| Etapa                      | Comando                                              | Resultado                                  |
+| :------------------------- | :----------------------------------------------------| :----------------------------------------- |
+| 📷 Captura de snapshot     | `ros2 launch forest_segmentation snapshot.launch.py` | Carpeta con imagen, LiDAR y GPS            |
+| 🌿 Segmentación y análisis | `python3 process.py`                                 | Segmentación + métricas + mapa actualizado |
+| 🗺️ Ver mapa                | `snapshots/maps/veg_map.html`                        | Mapa Folium interactivo                    |
 
 ---
 
@@ -301,4 +311,4 @@ pip install torch torchvision open3d folium supervision pandas pillow scipy
 
 ✍️ **Autor:** Quique Muñoz
 📍 **Repositorio:** `forest_segmentation`
-🗓️ **Última actualización:** Noviembre 2025
+🗓️ **Última actualización:** Diciembre 2025
