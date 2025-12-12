@@ -50,7 +50,7 @@ def robust_mean_and_count(df, side_name="unknown", iqr_factor=0.6, mad_threshold
 
     # Filtrar alturas no nulas o negativas
     h = df["height"].dropna().values
-    h = h[h > min_height]  # <-- ignorar hierba "inexistente"
+    h = h[h > min_height]  
     if h.size == 0:
         print(f"⚠️ [{side_name}] Sin alturas válidas (todas <= {min_height} m o NaN).")
         return np.nan, 0
@@ -119,10 +119,8 @@ def combine_heights(h_left, n_left, h_right, n_right, h_all, strategy="max"):
         if total_n > 0:
             num = (h_left * n_left if np.isfinite(h_left) else 0.0) + (h_right * n_right if np.isfinite(h_right) else 0.0)
             return float(num / total_n)
-        # si no hay n, caer a media simple
         return float(np.mean(vals))
     else:
-        # fallback seguro
         return max(vals)
 
 def fmt(v):
@@ -187,7 +185,6 @@ points_data.setdefault("vehicle", [])
 
 timestamp = snapshot_dir.name
 
-# Añadir combinado (si hay dato)
 if np.isfinite(h_combined):
     entry = {
         "lat": lat, "lon": lon,
@@ -226,6 +223,7 @@ plugins.MeasureControl(primary_length_unit='meters').add_to(m)
 fg_veg = folium.FeatureGroup(name="Vegetación detectada")
 m.add_child(fg_veg)
 fg_path = folium.FeatureGroup(name="Ruta del vehículo").add_to(m)
+fg_heatmap = folium.FeatureGroup(name="Mapa de calor de vegetación").add_to(m)
 g_red = plugins.FeatureGroupSubGroup(fg_veg, "Vegetación alta")
 m.add_child(g_red)
 g_orange = plugins.FeatureGroupSubGroup(fg_veg, "Vegetación media")
@@ -303,7 +301,7 @@ if heat_data:
             1.0: 'red'       # alta
         },
 
-    ).add_to(m)
+    ).add_to(fg_heatmap)
     
 else:
     print("⚠️ No hay datos válidos para generar la capa de calor.")
